@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Trello
 {
@@ -8,12 +9,22 @@ namespace Trello
     {
         static void Main(string[] args)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<SchoolContext>();
-            optionsBuilder.UseSqlServer("Data Source=MSI\\MSSQLSERVER01;Initial Catalog=Week19;Integrated Security=True");
-            var options = optionsBuilder.Options;
-
-            using (var context = new SchoolContext(options))
+            using (var ctx = new SchoolContext())
             {
+                var stud = new Student()
+                {
+                    StudentName = "Bill",
+                    Grade = new Grade() { GradeName = "Second", Section = "Low" }
+                };
+
+                ctx.Students.Add(stud);
+                ctx.SaveChanges();
+
+                var students = ctx.Students.Include("Grade").ToList();
+                foreach(var student in students)
+                {
+                    Console.WriteLine($"Student name :{student.StudentName},Grade={student.Grade.GradeName},Grade section = {student.Grade.Section}");
+                }
             }
         }
 
@@ -40,8 +51,9 @@ namespace Trello
 
         public class SchoolContext : DbContext
         {
-            public SchoolContext(DbContextOptions<SchoolContext> options) : base(options)
+            protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
             {
+                optionsBuilder.UseSqlServer(@"Data Source=MSI\MSSQLSERVER01;Initial Catalog=Week19;Integrated Security=True");
             }
 
             public DbSet<Student> Students { get; set; }
